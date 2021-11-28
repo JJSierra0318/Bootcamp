@@ -5,11 +5,11 @@ const Header = (props) => {
 }
 
 const Content = (props) => {
-  return <p>{props.part} {props.exercise}</p>
+  return <p>{props.part}: {props.exercise}</p>
 }
 
 const Total = (props) => {
-  return <p>Number of exercises {props.exercise1 + props.exercise2 + props.exercise3}</p>
+  return <p>Number of exercises: {props.exercise1 + props.exercise2 + props.exercise3}</p>
 }
 
 const App = () => {
