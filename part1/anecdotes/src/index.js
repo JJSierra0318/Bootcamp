@@ -19,7 +19,7 @@ const Votes = (props) => {
 const App = (props) => {
   const [selected, setSelected] = useState(0)
   const [points, setPoints] = useState(Array(anecdotes.length).fill(0))
-  const [max, setMax] = useState(anecdotes.length)
+  const [max, setMax] = useState(0)
 
   const handleClickVote = () => {
     const copy = [...points]
