@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import personService from './services/persons'
 
 const Filter = (props) => <div>filter shown with <input value={props.filter} onChange={props.handleFilterChange}/></div>;
 
@@ -15,21 +15,12 @@ const PersonForm =(props) => {
   )
 }
 
-const Numbers = ({persons}) => {
-  return (
-  <table>
-    <tbody>
-      {persons.map((person) => (
-        <Person key={person.name} name={person.name} number={person.number}/>
-      ))}
-    </tbody>
-  </table>
-)}
+const Person = ({id, name, number, handleClickDelete}) => {
 
-const Person = ({name, number}) => {
   return (<tr>
     <td>{name}</td>
     <td>{number}</td>
+    <td><button onClick={handleClickDelete}>delete</button></td>
   </tr>
 )}
 
@@ -40,10 +31,10 @@ const App = () => {
   const [ filter, setFilter] = useState('')
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(Response => {
-        setPersons(Response.data)
+    personService
+      .getAll()
+      .then(initialPersons => {
+        setPersons(initialPersons)
       })
   }, [])
 
@@ -63,16 +54,31 @@ const App = () => {
     event.preventDefault();
 
     let exists = false;
+    let id = '';
 
     persons.forEach((element) => {
       const person = element.name.toLowerCase();
       if (person === newName.toLowerCase()) {
         exists = true;
+        console.log(element.id)
+        id = element.id;
       }
     });
     
     if (exists) {
-      alert(`${newName} is already added to the phonebook`)} 
+      if (window.confirm(`${newName} is already added to the phonebook, replace de old number with a new one`)){
+        const newPerson = {
+          name: newName,
+          number: newNumber,
+        }
+
+        personService
+          .update(id, newPerson)
+          .then(returnedPerson => {
+            setPersons(persons.map(person => person.id===id ? returnedPerson : person))
+          })
+      }}
+
     else if (newName.length===0 || newNumber.length===0) {
       alert('Do not leave any field empty')} 
     else {
@@ -81,15 +87,28 @@ const App = () => {
         number: newNumber,
       };
   
-      axios
-        .post('http://localhost:3001/persons', newPerson)
-        .then(response => {
-          setPersons(persons.concat(response.data))
+      personService
+        .create(newPerson)
+        .then(returnedPerson => {
+          setPersons(persons.concat(returnedPerson))
           
         })
     }
     setNewName('');
     setNewNumber('');
+  }
+
+  const handleClickDelete = (id, name) => {
+
+    if (window.confirm(`Delete ${name}`))
+    personService
+      .remove(id)
+      .then(() => {
+        const personFilter = persons.filter((person) => person.id !== id)
+        console.log(personFilter)
+        setPersons(personFilter)
+        
+      })
   }
 
   return (
@@ -100,9 +119,16 @@ const App = () => {
       <PersonForm newName={newName} newNumber={newNumber} 
       handleNameChange={handleNameChange} handleNumberChange={handleNumberChange} handleSubmit={handleSubmit}/>
       <h3>Numbers</h3>
-      {filter.length===0 
-      ? <Numbers persons={persons}/>
-      : <Numbers persons={persons.filter((person) => person.name.toLowerCase().includes(filter.toLowerCase()))}/>}
+      <table>
+        <tbody>
+        {persons.map((person) => {
+          if (person.name.toLowerCase().includes(filter.toLowerCase())) {
+            return <Person key={person.id} id={person.id} name={person.name} number={person.number} handleClickDelete={() => {handleClickDelete(person.id, person.name)}}/>
+          }
+          return undefined
+        })}
+      </tbody>
+    </table>
     </div>
   )
 }

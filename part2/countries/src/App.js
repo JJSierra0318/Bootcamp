@@ -91,7 +91,7 @@ function App() {
 
   return (
     <div>
-      <Search handleChange={handleChange}/>
+      <Search handleChange={handleChange} filter={filter}/>
       <Info countries={countries} filter={filter} setFilter={setFilter}/>
     </div>
   );
