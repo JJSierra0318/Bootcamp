@@ -1,34 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import personService from './services/persons'
+import Filter from './components/Filter'
+import Form from './components/Form'
+import Person from './components/Person'
+import AddedNotification from './components/AddedNotification'
+import ErrorNotification from './components/ErrorNotification'
 
-const Filter = (props) => <div>filter shown with <input value={props.filter} onChange={props.handleFilterChange}/></div>;
 
-const PersonForm =(props) => {
-  return (
-    <form onSubmit={props.handleSubmit}>
-        <div>name: <input value={props.newName} onChange={props.handleNameChange}/></div>
-        <div>number: <input value={props.newNumber} onChange={props.handleNumberChange}/></div>
-        <div>
-          <button type="submit">add</button>
-        </div>
-      </form>
-  )
-}
-
-const Person = ({id, name, number, handleClickDelete}) => {
-
-  return (<tr>
-    <td>{name}</td>
-    <td>{number}</td>
-    <td><button onClick={handleClickDelete}>delete</button></td>
-  </tr>
-)}
 
 const App = () => {
-  const [persons, setPersons] = useState([])
+  const [ persons, setPersons] = useState([])
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber] =useState('')
   const [ filter, setFilter] = useState('')
+  const [ addedMessage, setAddedMessage] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
     personService
@@ -93,6 +79,11 @@ const App = () => {
           setPersons(persons.concat(returnedPerson))
           
         })
+
+      setAddedMessage(`Added ${newName}`)
+      setTimeout(() => {
+        setAddedMessage(null)
+      }, 5000)
     }
     setNewName('');
     setNewNumber('');
@@ -100,23 +91,30 @@ const App = () => {
 
   const handleClickDelete = (id, name) => {
 
-    if (window.confirm(`Delete ${name}`))
-    personService
-      .remove(id)
-      .then(() => {
-        const personFilter = persons.filter((person) => person.id !== id)
-        console.log(personFilter)
-        setPersons(personFilter)
-        
-      })
-  }
+    if (window.confirm(`Delete ${name}`)){
+      const personFilter = persons.filter((person) => person.id !== id)
+      personService
+        .remove(id)
+        .then(() => {
+          setPersons(personFilter)
+        })
+        .catch(error => {
+          setErrorMessage(`${name} was already removed from the server`)
+          setTimeout(() => {
+            setErrorMessage(null)
+            setPersons(personFilter)
+          }, 5000)
+        })
+    }}
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <AddedNotification message={addedMessage}/>
+      <ErrorNotification message={errorMessage}/>
       <Filter handleFilterChange={handleFilterChange} filter={filter}/>
       <h3>add a new person</h3>
-      <PersonForm newName={newName} newNumber={newNumber} 
+      <Form newName={newName} newNumber={newNumber} 
       handleNameChange={handleNameChange} handleNumberChange={handleNumberChange} handleSubmit={handleSubmit}/>
       <h3>Numbers</h3>
       <table>
